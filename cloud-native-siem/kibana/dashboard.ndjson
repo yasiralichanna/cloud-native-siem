@@ -1,0 +1,11 @@
+{
+  "attributes": {
+    "title": "Cloud SIEM Security Dashboard",
+    "description": "Real-time security monitoring with MITRE ATT&CK mapping",
+    "panelsJSON": "[{\"version\":\"8.7.0\",\"type\":\"lens\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{\"attributes\":{\"title\":\"Security Events by MITRE Tactic\",\"visualizationType\":\"lnsPie\",\"state\":{\"datasourceStates\":{\"indexpattern\":{\"layers\":{\"layer1\":{\"columns\":{\"col1\":{\"label\":\"Count of records\",\"dataType\":\"number\",\"isBucketed\":false,\"sourceField\":\"RecordsCount\",\"operationType\":\"count\"}},\"columnOrder\":[\"col1\"],\"incompleteColumns\":{}}}}},\"filters\":[],\"query\":{\"language\":\"kuery\",\"query\":\"\"},\"visualization\":{\"shape\":\"pie\",\"layers\":[{\"layerId\":\"layer1\",\"groups\":[\"col1\"],\"metric\":\"col1\",\"numberDisplay\":\"value\",\"categoryDisplay\":\"default\",\"legendDisplay\":\"show\",\"nestedLegend\":false}]}},\"references\":[{\"type\":\"index-pattern\",\"id\":\"siem-pattern\",\"name\":\"indexpattern-datasource-current-indexpattern\"}]}}},{\"version\":\"8.7.0\",\"type\":\"timelion\",\"gridData\":{\"x\":0,\"y\":15,\"w\":24,\"h\":10,\"i\":\"2\"},\"panelIndex\":\"2\",\"embeddableConfig\":{\"sheet\":[\".es(index=siem-events-*).label('Security Events').color(#FF6B6B)\"]}}]",
+    "optionsJSON": "{\"useMargins\":true}",
+    "version": 1,
+    "timeRestore": false
+  },
+  "references": []
+}

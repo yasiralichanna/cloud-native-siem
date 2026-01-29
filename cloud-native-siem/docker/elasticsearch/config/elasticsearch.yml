@@ -1,0 +1,26 @@
+cluster.name: "siem-cluster"
+network.host: 0.0.0.0
+
+# Disable X-Pack Security for development
+xpack.security.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Cluster discovery for single node
+discovery.type: single-node
+
+# Memory settings
+bootstrap.memory_lock: true
+
+# Thread pools configuration
+thread_pool.write.queue_size: 1000
+thread_pool.search.queue_size: 1000
+
+# Index settings
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+# Slow log thresholds
+index.search.slowlog.threshold.query.warn: 10s
+index.search.slowlog.threshold.query.info: 5s
+index.search.slowlog.threshold.query.debug: 2s
+index.search.slowlog.threshold.query.trace: 500ms

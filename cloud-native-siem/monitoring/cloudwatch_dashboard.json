@@ -1,0 +1,39 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          ["AWS/Lambda", "Invocations", "FunctionName", "siem-security-processor"],
+          [".", "Errors", ".", "."],
+          [".", "Duration", ".", "."]
+        ],
+        "region": "us-east-1",
+        "title": "SIEM Lambda Performance"
+      }
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/siem-security-processor' | filter @message like /ERROR/",
+        "region": "us-east-1",
+        "title": "SIEM Processing Errors",
+        "view": "table"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "view": "singleValue",
+        "metrics": [
+          ["AWS/SecurityHub", "Findings", "WorkflowStatus", "NEW"],
+          [".", ".", ".", "SUPPRESSED"]
+        ],
+        "region": "us-east-1",
+        "title": "Security Hub Findings"
+      }
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+    container_name: siem-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - cluster.name=siem-cluster
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 | grep -q 'You Know, for Search'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.7.0
+    container_name: siem-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=siem-kibana
+      - XPACK_SECURITY_ENABLED=false
+    ports:
+      - "5601:5601"
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'All services are available'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  opencti:
+    image: opencti/platform:5.9.0
+    container_name: siem-opencti
+    environment:
+      - APP__PORT=8080
+      - APP__ADMIN__EMAIL=admin@siem.local
+      - APP__ADMIN__PASSWORD=ChangeMe123!
+      - APP__ADMIN__TOKEN=changeme
+      - APP__APP_LOGS__LOGS_LEVEL=info
+      - REDIS_HOSTNAME=redis
+      - RABBITMQ_HOSTNAME=rabbitmq
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=ChangeMe123!
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - rabbitmq
+      - minio
+    networks:
+      - siem-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: siem-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: siem-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=ChangeMe123!
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"  # Management UI
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  minio:
+    image: minio/minio:latest
+    container_name: siem-minio
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=ChangeMe123!
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    networks:
+      - siem-network
+
+  # Optional: Logstash for additional log processing
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.7.0
+    container_name: siem-logstash
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"  # Beats input
+      - "5044:5044"  # Beats input alternative
+    environment:
+      - LS_JAVA_OPTS=-Xmx512m -Xms512m
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - siem-network
+    restart: on-failure
+
+volumes:
+  es-data:
+    driver: local
+  kibana-data:
+    driver: local
+  redis-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  minio-data:
+    driver: local
+
+networks:
+  siem-network:
+    driver: bridge
+    name: siem-network
